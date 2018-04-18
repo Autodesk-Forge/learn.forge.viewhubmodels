@@ -19,13 +19,14 @@
 'use strict';
 
 var express = require('express');
-var cookieSession = require('cookie-session')
 var app = express();
 
 // prepare server routing
 app.use('/', express.static(__dirname + '/../www')); // redirect static calls
 app.set('port', process.env.PORT || 3000); // main port
 
+// cookie-based session
+var cookieSession = require('cookie-session')
 app.use(cookieSession({
     name: 'forgesession',
     keys: ['forgesecurekey'],
@@ -34,11 +35,20 @@ app.use(cookieSession({
 }))
 
 // prepare our API endpoint routing
-var oauth = require('./oauthtoken');
-var datamanagement = require('./datamanagement');
-var user = require('./user');
-app.use('/', oauth); // redirect oauth API calls
-app.use('/', datamanagement); // redirect Data Management API calls
-app.use('/', user); // redirect User API calls
+loadRoute('./oauthtoken');
+// viewmodels sample
+loadRoute('./oss');
+loadRoute('./modelderivative1');
+// view hub models sample
+loadRoute('./datamanagement');
+loadRoute('./user');
+
+function loadRoute(path) {
+    try {
+        require.resolve(path);
+        var m = require(path);
+        app.use('/', m);
+    } catch (e) { }
+}
 
 module.exports = app;
