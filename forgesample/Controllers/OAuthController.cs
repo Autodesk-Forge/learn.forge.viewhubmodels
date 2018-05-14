@@ -1,4 +1,22 @@
-﻿using Autodesk.Forge;
+﻿/////////////////////////////////////////////////////////////////////
+// Copyright (c) Autodesk, Inc. All rights reserved
+// Written by Forge Partner Development
+//
+// Permission to use, copy, modify, and distribute this software in
+// object code form for any purpose and without fee is hereby granted,
+// provided that the above copyright notice appears in all copies and
+// that both that copyright notice and the limited warranty and
+// restricted rights notice below appear in all supporting
+// documentation.
+//
+// AUTODESK PROVIDES THIS PROGRAM "AS IS" AND WITH ALL FAULTS.
+// AUTODESK SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTY OF
+// MERCHANTABILITY OR FITNESS FOR A PARTICULAR USE.  AUTODESK, INC.
+// DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
+// UNINTERRUPTED OR ERROR FREE.
+/////////////////////////////////////////////////////////////////////
+
+using Autodesk.Forge;
 using Newtonsoft.Json;
 using System;
 using System.Net;
@@ -18,6 +36,7 @@ namespace forgesample.Controllers
     {
       Credentials credentials = await Credentials.FromSessionAsync();
 
+      // return the public (viewables:read) access token
       return new AccessToken()
       {
         access_token = credentials.TokenPublic,
@@ -25,34 +44,34 @@ namespace forgesample.Controllers
       };
     }
 
+    /// <summary>
+    /// Response for GetPublicToken
+    /// </summary>
+    public struct AccessToken
+    {
+      public string access_token { get; set; }
+      public int expires_in { get; set; }
+    }
+
     [HttpGet]
     [Route("api/forge/oauth/signout")]
-    public async Task<HttpResponseMessage> Singout()
+    public HttpResponseMessage Singout()
     {
+      // finish the session
       HttpContext.Current.Session.Abandon();
 
+      // redirect to root
       HttpResponseMessage res = Request.CreateResponse(HttpStatusCode.Moved /* rorce redirect */);
       res.Headers.Location = new Uri("/", UriKind.Relative); // back to / (root, default)
       return res;
-    }
-
-    public async Task<AccessToken> GetInternalTokenAsync()
-    {
-      Credentials credentials = await Credentials.FromSessionAsync();
-
-      return new AccessToken()
-      {
-        access_token = credentials.TokenInternal,
-        expires_in = (int)credentials.ExpiresAt.Subtract(DateTime.Now).TotalSeconds
-      };
     }
 
     [HttpGet]
     [Route("api/forge/oauth/url")]
     public string GetOAuthURL()
     {
+      // prepare the sign in URL
       Scope[] scopes = { Scope.DataRead };
-
       ThreeLeggedApi _threeLeggedApi = new ThreeLeggedApi();
       string oauthUrl = _threeLeggedApi.Authorize(
         Credentials.GetAppSetting("FORGE_CLIENT_ID"),
@@ -67,28 +86,19 @@ namespace forgesample.Controllers
     [Route("api/forge/callback/oauth")] // see Web.Config FORGE_CALLBACK_URL variable
     public async Task<HttpResponseMessage> OAuthCallbackAsync(string code)
     {
-
+      // create credentials form the oAuth CODE
       Credentials credentials = await Credentials.CreateFromCodeAsync(code);
 
+      // redirect to root
       HttpResponseMessage res = Request.CreateResponse(HttpStatusCode.Moved /* rorce redirect */);
       res.Headers.Location = new Uri("/", UriKind.Relative); // back to / (root, default)
 
       return res;
     }
-
-    /// <summary>
-    /// Response for GetPublicToken
-    /// </summary>
-    public struct AccessToken
-    {
-      public string access_token { get; set; }
-      public int expires_in { get; set; }
-    }
   }
-
-
+  
   /// <summary>
-  ///  Store data in session
+  /// Store data in session
   /// </summary>
   public class Credentials
   {
@@ -99,6 +109,11 @@ namespace forgesample.Controllers
     public string RefreshToken { get; set; }
     public DateTime ExpiresAt { get; set; }
 
+    /// <summary>
+    /// Perform the OAuth authorization via code
+    /// </summary>
+    /// <param name="code"></param>
+    /// <returns></returns>
     public static async Task<Credentials> CreateFromCodeAsync(string code)
     {
       ThreeLeggedApi oauth = new ThreeLeggedApi();
@@ -122,6 +137,10 @@ namespace forgesample.Controllers
       return credentials;
     }
 
+    /// <summary>
+    /// Restore the credentials from the session object, refresh if needed
+    /// </summary>
+    /// <returns></returns>
     public static async Task<Credentials> FromSessionAsync()
     {
       if (HttpContext.Current.Session == null || HttpContext.Current.Session["ForgeCredentials"] == null)
@@ -132,6 +151,10 @@ namespace forgesample.Controllers
       return credentials;
     }
 
+    /// <summary>
+    /// Refresh the credentials (internal & external)
+    /// </summary>
+    /// <returns></returns>
     private async Task RefreshAsync()
     {
       ThreeLeggedApi oauth = new ThreeLeggedApi();
