@@ -209,21 +209,21 @@ namespace forgesample.Controllers
 
       return nodes;
     }
-  }
 
-  public class jsTreeNode
-  {
-    public jsTreeNode(string id, string text, string type, bool children)
+    public class jsTreeNode
     {
-      this.id = id;
-      this.text = text;
-      this.type = type;
-      this.children = children;
-    }
+      public jsTreeNode(string id, string text, string type, bool children)
+      {
+        this.id = id;
+        this.text = text;
+        this.type = type;
+        this.children = children;
+      }
 
-    public string id { get; set; }
-    public string text { get; set; }
-    public string type { get; set; }
-    public bool children { get; set; }
+      public string id { get; set; }
+      public string text { get; set; }
+      public string type { get; set; }
+      public bool children { get; set; }
+    }
   }
 }
