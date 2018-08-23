@@ -49,8 +49,8 @@ class OAuth {
 
         const now = new Date();
         this._session.internal_token = internalCredentials.access_token;
-        this._session.public_token = internalCredentials.access_token;
-        this._session.refresh_token = internalCredentials.refresh_token;
+        this._session.public_token = publicCredentials.access_token;
+        this._session.refresh_token = publicCredentials.refresh_token;
         this._session.expires_at = (now.setSeconds(now.getSeconds() + publicCredentials.expires_in));
     }
 
