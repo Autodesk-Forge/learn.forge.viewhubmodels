@@ -40,7 +40,7 @@ app.use('/api/forge', require('./routes/oauth'));
 app.use('/api/forge', require('./routes/datamanagement'));
 app.use('/api/forge', require('./routes/user'));
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json(err);
+    console.error(err);
+    res.status(err.statusCode).json(err);
 });
 app.listen(PORT, () => { console.log(`Server listening on port ${PORT}`); });
