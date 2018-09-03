@@ -136,7 +136,7 @@ async function getFolderContents(projectId, folderId, oauthClient, credentials, 
             return createTreeNode(
                 item.links.self.href,
                 name,
-                'items',
+                item.type,
                 true
             );
         } else {
