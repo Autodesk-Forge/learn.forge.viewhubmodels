@@ -32,7 +32,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(cookieSession({
     name: 'forge_session',
     keys: ['forge_secure_key'],
-    secure: (process.env.NODE_ENV === 'production'),
     maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days, same as refresh token
 }));
 app.use(express.json({ limit: '50mb' }));
