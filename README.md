@@ -33,7 +33,7 @@ For using this sample, you need an Autodesk developer credentials. Visit the [Fo
 
 Clone this project or download it (this `net` branch only). It's recommended to install [GitHub desktop](https://desktop.github.com/). To clone it via command line, use the following (**Terminal** on MacOSX/Linux, **Git Shell** on Windows):
 
-    git clone net https://github.com/autodesk-forge/forge.learning.viewhubmodels
+    git clone -b net https://github.com/Autodesk-Forge/learn.forge.viewhubmodels.git
 
 Open the **web.config** file and adjust the Forge Client ID & Secret. If you plan to deploy to Appharbor, configure the variables on the host settings (no need to change this web.config file).
 
