@@ -153,10 +153,12 @@ namespace forgesample.Controllers
       string hubId = idParams[idParams.Length - 3];
       string projectId = idParams[idParams.Length - 1];
 
-      var project = await projectApi.GetProjectAsync(hubId, projectId);
-      var rootFolderHref = project.data.relationships.rootFolder.meta.link.href;
-
-      return await GetFolderContents(rootFolderHref);
+      var folders = await projectApi.GetProjectTopFoldersAsync(hubId, projectId);
+      foreach (KeyValuePair<string, dynamic> folder in new DynamicDictionaryItems(folders.data))
+      {
+        nodes.Add(new jsTreeNode(folder.Value.links.self.href, folder.Value.attributes.displayName, "folders", true));
+      }
+      return nodes;
     }
 
     private async Task<IList<jsTreeNode>> GetFolderContents(string href)
