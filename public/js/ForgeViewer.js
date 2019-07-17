@@ -22,15 +22,8 @@ function launchViewer(urn) {
   var options = {
     env: 'AutodeskProduction',
     getAccessToken: getForgeToken,
-    useADP: false
+    api: 'derivativeV2' + (atob(urn.replace('_', '/')).indexOf('emea') > -1 ? '_EU' : '') // handle BIM 360 US and EU regions
   };
-
-  //use OTG
-  // options.env = 'FluentProduction';
-  // options.useCredentials = true;
-  // options.api ='fluent';
-  // viewer.model.isOTG()  will be true, if OTG is loaded.
-  // add ?disableIndexedDb=true to the URN for problem files.
 
   Autodesk.Viewing.Initializer(options, () => {
     viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'));
@@ -42,10 +35,9 @@ function launchViewer(urn) {
 
 function onDocumentLoadSuccess(doc) {
   var viewables = doc.getRoot().getDefaultGeometry();
-  viewer.loadDocumentNode(doc, viewables).then(i=>{
+  viewer.loadDocumentNode(doc, viewables).then(i => {
     console.log(`isOTG:${viewer.model.isOTG()}`);
   });
-  
 }
 
 function onDocumentLoadFailure(viewerErrorCode) {
@@ -53,10 +45,9 @@ function onDocumentLoadFailure(viewerErrorCode) {
 }
 
 function getForgeToken(callback) {
-  jQuery.ajax({
-    url: '/api/forge/oauth/token',
-    success: function (res) {
-      callback(res.access_token, res.expires_in)
-    }
+  fetch('/api/forge/oauth/token').then(res => {
+    res.json().then(data => {
+      callback(data.access_token, data.expires_in);
+    });
   });
 }
