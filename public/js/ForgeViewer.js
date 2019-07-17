@@ -16,45 +16,40 @@
 // UNINTERRUPTED OR ERROR FREE.
 /////////////////////////////////////////////////////////////////////
 
-var viewerApp;
+var viewer;
 
 function launchViewer(urn) {
   var options = {
     env: 'AutodeskProduction',
-    getAccessToken: getForgeToken
+    getAccessToken: getForgeToken,
+    useADP: false
   };
-  var documentId = 'urn:' + urn;
-  Autodesk.Viewing.Initializer(options, function onInitialized() {
-    viewerApp = new Autodesk.Viewing.ViewingApplication('forgeViewer');
-    viewerApp.registerViewer(viewerApp.k3D, Autodesk.Viewing.Private.GuiViewer3D);
-    viewerApp.loadDocument(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
+
+  //use OTG
+  // options.env = 'FluentProduction';
+  // options.useCredentials = true;
+  // options.api ='fluent';
+  // viewer.model.isOTG()  will be true, if OTG is loaded.
+  // add ?disableIndexedDb=true to the URN for problem files.
+
+  Autodesk.Viewing.Initializer(options, () => {
+    viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'));
+    viewer.start();
+    var documentId = 'urn:' + urn;
+    Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
   });
 }
 
 function onDocumentLoadSuccess(doc) {
-  // We could still make use of Document.getSubItemsWithProperties()
-  // However, when using a ViewingApplication, we have access to the **bubble** attribute,
-  // which references the root node of a graph that wraps each object from the Manifest JSON.
-  var viewables = viewerApp.bubble.search({ 'type': 'geometry' });
-  if (viewables.length === 0) {
-    console.error('Document contains no viewables.');
-    return;
-  }
-
-  // Choose any of the avialble viewables
-  viewerApp.selectItem(viewables[0].data, onItemLoadSuccess, onItemLoadFail);
+  var viewables = doc.getRoot().getDefaultGeometry();
+  viewer.loadDocumentNode(doc, viewables).then(i=>{
+    console.log(`isOTG:${viewer.model.isOTG()}`);
+  });
+  
 }
 
 function onDocumentLoadFailure(viewerErrorCode) {
   console.error('onDocumentLoadFailure() - errorCode:' + viewerErrorCode);
-}
-
-function onItemLoadSuccess(viewer, item) {
-  // item loaded, any custom action?
-}
-
-function onItemLoadFail(errorCode) {
-  console.error('onItemLoadFail() - errorCode:' + errorCode);
 }
 
 function getForgeToken(callback) {
