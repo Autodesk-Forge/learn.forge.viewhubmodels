@@ -35,6 +35,7 @@ function launchViewer(urn, viewableId) {
   });
 
   function onDocumentLoadSuccess(doc) {
+    // if a viewableId was specified, load that view, otherwise the default view
     var viewables = (viewableId ? doc.getRoot().findByGuid(viewableId) : doc.getRoot().getDefaultGeometry());
     viewer.loadDocumentNode(doc, viewables).then(i => {
       // any additional action here?

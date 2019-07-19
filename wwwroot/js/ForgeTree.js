@@ -72,42 +72,18 @@ function prepareUserHubsTree() {
       }
     },
     'types': {
-      'default': {
-        'icon': 'glyphicon glyphicon-question-sign'
-      },
-      '#': {
-        'icon': 'glyphicon glyphicon-user'
-      },
-      'hubs': {
-        'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360hub.png'
-      },
-      'personalHub': {
-        'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360hub.png'
-      },
-      'bim360Hubs': {
-        'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/bim360hub.png'
-      },
-      'bim360projects': {
-        'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/bim360project.png'
-      },
-      'a360projects': {
-        'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360project.png'
-      },
-      'items': {
-        'icon': 'glyphicon glyphicon-file'
-      },
-      'bim360documents': {
-        'icon': 'glyphicon glyphicon-file'
-      },
-      'folders': {
-        'icon': 'glyphicon glyphicon-folder-open'
-      },
-      'versions': {
-        'icon': 'glyphicon glyphicon-time'
-      },
-      'unsupported': {
-        'icon': 'glyphicon glyphicon-ban-circle'
-      }
+      'default': { 'icon': 'glyphicon glyphicon-question-sign' },
+      '#': { 'icon': 'glyphicon glyphicon-user' },
+      'hubs': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360hub.png' },
+      'personalHub': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360hub.png' },
+      'bim360Hubs': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/bim360hub.png' },
+      'bim360projects': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/bim360project.png' },
+      'a360projects': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360project.png' },      
+      'folders': { 'icon': 'glyphicon glyphicon-folder-open' },
+      'items': { 'icon': 'glyphicon glyphicon-file' },
+      'bim360documents': { 'icon': 'glyphicon glyphicon-file' },
+      'versions': { 'icon': 'glyphicon glyphicon-time' },
+      'unsupported': { 'icon': 'glyphicon glyphicon-ban-circle' }
     },
     "sort": function (a, b) {
       var a1 = this.get_node(a);
@@ -125,11 +101,10 @@ function prepareUserHubsTree() {
     "state": { "key": "autodeskHubs" }// key restore tree state
   }).bind("activate_node.jstree", function (evt, data) {
     if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents')) {
-      var urn;
-      var viewableId
+      // in case the node.id contains a | then split into URN & viewableId
       if (data.node.id.indexOf('|') > -1) {
-        urn = data.node.id.split('|')[1];
-        viewableId = data.node.id.split('|')[2];
+        var urn; = data.node.id.split('|')[1];
+        var viewableId = data.node.id.split('|')[2];
         launchViewer(urn, viewableId);
       }
       else {
