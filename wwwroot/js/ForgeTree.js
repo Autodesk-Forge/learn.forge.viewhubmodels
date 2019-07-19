@@ -96,6 +96,9 @@ function prepareUserHubsTree() {
       'items': {
         'icon': 'glyphicon glyphicon-file'
       },
+      'bim360documents': {
+        'icon': 'glyphicon glyphicon-file'
+      },
       'folders': {
         'icon': 'glyphicon glyphicon-folder-open'
       },
@@ -106,13 +109,32 @@ function prepareUserHubsTree() {
         'icon': 'glyphicon glyphicon-ban-circle'
       }
     },
+    "sort": function (a, b) {
+      var a1 = this.get_node(a);
+      var b1 = this.get_node(b);
+      var parent = this.get_node(a1.parent);
+      if (parent.type === 'items') { // sort by version number
+        var id1 = Number.parseInt(a1.text.substring(a1.text.indexOf('v') + 1, a1.text.indexOf(':')))
+        var id2 = Number.parseInt(b1.text.substring(b1.text.indexOf('v') + 1, b1.text.indexOf(':')));
+        return id1 > id2 ? 1 : -1;
+      }
+      else if (a1.type !== b1.type) return a1.icon < b1.icon ? 1 : -1; // types are different inside folder, so sort by icon (files/folders)
+      else return a1.text > b1.text ? 1 : -1; // basic name/text sort
+    },
     "plugins": ["types", "state", "sort"],
     "state": { "key": "autodeskHubs" }// key restore tree state
   }).bind("activate_node.jstree", function (evt, data) {
-    if (data != null && data.node != null && data.node.type == 'versions') {
-      $("#forgeViewer").empty();
-      var urn = data.node.id;
-      launchViewer(urn);
+    if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents')) {
+      var urn;
+      var viewableId
+      if (data.node.id.indexOf('|') > -1) {
+        urn = data.node.id.split('|')[1];
+        viewableId = data.node.id.split('|')[2];
+        launchViewer(urn, viewableId);
+      }
+      else {
+        launchViewer(data.node.id);
+      }
     }
   });
 }
