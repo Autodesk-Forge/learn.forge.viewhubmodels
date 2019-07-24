@@ -103,7 +103,7 @@ function prepareUserHubsTree() {
     if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents')) {
       // in case the node.id contains a | then split into URN & viewableId
       if (data.node.id.indexOf('|') > -1) {
-        var urn; = data.node.id.split('|')[1];
+        var urn = data.node.id.split('|')[1];
         var viewableId = data.node.id.split('|')[2];
         launchViewer(urn, viewableId);
       }
