@@ -18,7 +18,9 @@
 
 var viewer;
 
-function launchViewer(urn) {
+// @urn the model to show
+// @viewablesId which viewables to show, applies to BIM 360 Plans folder
+function launchViewer(urn, viewableId) {
   var options = {
     env: 'AutodeskProduction',
     getAccessToken: getForgeToken,
@@ -26,22 +28,23 @@ function launchViewer(urn) {
   };
 
   Autodesk.Viewing.Initializer(options, () => {
-    viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'));
+    viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'), { extensions: ['Autodesk.Sample.MiniMapExtension', 'MyAwesomeExtension'] });
     viewer.start();
     var documentId = 'urn:' + urn;
     Autodesk.Viewing.Document.load(documentId, onDocumentLoadSuccess, onDocumentLoadFailure);
   });
-}
 
-function onDocumentLoadSuccess(doc) {
-  var viewables = doc.getRoot().getDefaultGeometry();
-  viewer.loadDocumentNode(doc, viewables).then(i => {
-    console.log(`isOTG:${viewer.model.isOTG()}`);
-  });
-}
+  function onDocumentLoadSuccess(doc) {
+    // if a viewableId was specified, load that view, otherwise the default view
+    var viewables = (viewableId ? doc.getRoot().findByGuid(viewableId) : doc.getRoot().getDefaultGeometry());
+    viewer.loadDocumentNode(doc, viewables).then(i => {
+      // any additional action here?
+    });
+  }
 
-function onDocumentLoadFailure(viewerErrorCode) {
-  console.error('onDocumentLoadFailure() - errorCode:' + viewerErrorCode);
+  function onDocumentLoadFailure(viewerErrorCode) {
+    console.error('onDocumentLoadFailure() - errorCode:' + viewerErrorCode);
+  }
 }
 
 function getForgeToken(callback) {
