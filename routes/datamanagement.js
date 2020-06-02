@@ -1,5 +1,5 @@
 const express = require('express');
-const { HubsApi, ProjectsApi, FoldersApi, ItemsApi,VersionsApi,DerivativesApi } = require('forge-apis');
+const { HubsApi, ProjectsApi, FoldersApi, ItemsApi, VersionsApi, DerivativesApi } = require('forge-apis');
 
 const { OAuth } = require('./common/oauth');
 
@@ -25,13 +25,13 @@ router.get('/datamanagement', async (req, res) => {
 
         let resourceName = ''
         let resourceId = ''
-        if(params.length>1){
+        if (params.length > 1) {
             resourceName = params[params.length - 2];
             resourceId = params[params.length - 1];
-        }else{
+        } else {
             resourceName = 'views'
-        } 
- 
+        }
+
         switch (resourceName) {
             case 'hubs':
                 getProjects(resourceId, oauth.getClient(), internalToken, res);
@@ -127,7 +127,7 @@ async function getFolderContents(projectId, folderId, oauthClient, credentials, 
     const contents = await folders.getFolderContents(projectId, folderId, {}, oauthClient, credentials);
     const treeNodes = contents.body.data.map((item) => {
         var name = (item.attributes.name == null ? item.attributes.displayName : item.attributes.name);
-        if (name !== '') { // BIM 360 Items with no displayName also don't have storage, so not file to transfer
+        if (name !== '') { 
             return createTreeNode(
                 item.links.self.href,
                 name,
@@ -148,69 +148,74 @@ async function getVersions(projectId, itemId, oauthClient, credentials, res) {
     const version_promises = versions.body.data.map(async (version) => {
         const dateFormated = new Date(version.attributes.lastModifiedTime).toLocaleString();
         const versionst = version.id.match(/^(.*)\?version=(\d+)$/)[2];
-        if(version.attributes.extension.data && version.attributes.extension.data.viewableGuid){
+        if (version.attributes.extension.data && version.attributes.extension.data.viewableGuid) {
 
             //this might be the documents in BIM 360 Plan folder. It is view (derivative)already.
-            const viewableGuid = version.attributes.extension.data.viewableGuid 
+            const viewableGuid = version.attributes.extension.data.viewableGuid
             //NOTE: version.id is the urn of view version, instead of the [seed file version urn]
             //tricky to find [seed file version urn]
             //var viewerUrn = Buffer.from(params[0]).toString('base64') + '_' + Buffer.from(params[1]).toString('base64')
-            
-            const seedVersionUrn = await getVersionRef(projectId,version.id,oauthClient, credentials) 
-            const viewerUrn = seedVersionUrn?Buffer.from(seedVersionUrn).toString('base64').replace('/', '_').trim('=').split('=').join(''):null
-             
+
+            const seedVersionUrn = await getVersionRef(projectId, version.id, oauthClient, credentials)
+            const viewerUrn = seedVersionUrn ? Buffer.from(seedVersionUrn).toString('base64').replace('/', '_').trim('=').split('=').join('') : null
+
+            // let's return for the jsTree with a special id:
+            // itemUrn|versionUrn|viewableId
+            // itemUrn: used as target_urn to get document issues
+            // versionUrn: used to launch the Viewer
+            // viewableId: which viewable should be loaded on the Viewer
+            // this information will be extracted when the user click on the tree node
             return createTreeNode(
-                viewerUrn +'|' + viewableGuid,
+                itemId + '|' + viewerUrn + '|' + viewableGuid,
                 decodeURI('v' + versionst + ': ' + dateFormated + ' by ' + version.attributes.lastModifiedUserName),
-                (viewerUrn != null ? 'bim360documents' : 'unsupported'),
+                (viewerUrn != null ? 'versions' : 'unsupported'),
                 false
-            ); 
-        }else{
+            );
+        } else {
             //non-BIM 360 Plan folder (also Autodesk 360, Fusion 360 etc). will need to dump views in the next iteration 
             const viewerUrn = (version.relationships != null && version.relationships.derivatives != null ? version.relationships.derivatives.data.id : null);
             return createTreeNode(
                 viewerUrn,
                 decodeURI('v' + versionst + ': ' + dateFormated + ' by ' + version.attributes.lastModifiedUserName),
-                viewerUrn? 'versions' : 'unsupported',
+                viewerUrn ? 'versions' : 'unsupported',
                 true
-            ); 
-        } 
+            );
+        }
     })
-    const versions_json = await Promise.all(version_promises); 
+    const versions_json = await Promise.all(version_promises);
     res.json(versions_json);
 }
 
 
 // get references of this version urn,e.g. views of seed file
-async function getVersionRef(projectId,viewUrnId, oauthClient,credentials) { 
+async function getVersionRef(projectId, viewUrnId, oauthClient, credentials) {
     // Documents in BIM 360 Folder will go to this branch
     const versionApi = new VersionsApi()
-    const relationshipRefs = await versionApi.getVersionRelationshipsRefs(projectId,viewUrnId,{},oauthClient,credentials)
-    
-    if(relationshipRefs.body && relationshipRefs.body.data && relationshipRefs.body.data.length>0)
-    {
+    const relationshipRefs = await versionApi.getVersionRelationshipsRefs(projectId, viewUrnId, {}, oauthClient, credentials)
+
+    if (relationshipRefs.body && relationshipRefs.body.data && relationshipRefs.body.data.length > 0) {
         //find meta of the reference
-        const ref = relationshipRefs.body.data.find(d=>d.meta && 
-                                                        d.meta.fromType == 'versions' && 
-                                                        d.meta.toType == 'versions')
-        if(ref){
-            if(ref.meta.extension.type == 'derived:autodesk.bim360:CopyDocument'){
+        const ref = relationshipRefs.body.data.find(d => d.meta &&
+            d.meta.fromType == 'versions' &&
+            d.meta.toType == 'versions')
+        if (ref) {
+            if (ref.meta.extension.type == 'derived:autodesk.bim360:CopyDocument') {
                 //this is a copy document, ref.id is the view urn, instead of version urn
                 //recurse until find the source version urn
                 const sourceViewId = ref.id
-                return await getVersionRef(projectId,sourceViewId, oauthClient,credentials)
-            }else if(ref.meta.extension.type == 'derived:autodesk.bim360:FileToDocument'){
+                return await getVersionRef(projectId, sourceViewId, oauthClient, credentials)
+            } else if (ref.meta.extension.type == 'derived:autodesk.bim360:FileToDocument') {
                 //this is the original documents, when source model version is extracted in BIM 360 Plan folder
                 return ref.id
-            }else{
+            } else {
                 return null
             }
-        }else{
+        } else {
             return null
         }
-    }else{
+    } else {
         return null
-    } 
+    }
 }
 
 
@@ -219,12 +224,12 @@ async function getVersionViews(urn, oauthClient, credentials, res) {
     const derivativesApi = new DerivativesApi();
 
     //get manifest of this model version 
-    const manifest = await derivativesApi.getManifest(urn,{},oauthClient, credentials)
+    const manifest = await derivativesApi.getManifest(urn, {}, oauthClient, credentials)
     //find the derivative of svf
-    const geo_derivatives = manifest.body.derivatives.find(d=>d.outputType == 'svf')
+    const geo_derivatives = manifest.body.derivatives.find(d => d.outputType == 'svf')
 
     //get metadata of this model version
-    const metadata = await derivativesApi.getMetadata(urn,{},oauthClient, credentials); 
+    const metadata = await derivativesApi.getMetadata(urn, {}, oauthClient, credentials);
 
     //dump each metadata
     const view_promises = metadata.body.data.metadata.map(async (view) => {
@@ -232,20 +237,20 @@ async function getVersionViews(urn, oauthClient, credentials, res) {
         //view.guid is the metadata id, now find the corresponding real vieweable id 
 
         //search which [geometry derivative] whose [graphics] child has the same metadata id 
-        const metadata_graphics = geo_derivatives.children.find(d=>d.type == 'geometry' && 
-                                                           d.children.find(r=>r.guid == view.guid)!=null)
-        
+        const metadata_graphics = geo_derivatives.children.find(d => d.type == 'geometry' &&
+            d.children.find(r => r.guid == view.guid) != null)
+
         return createTreeNode(
-            urn +'|' + (metadata_graphics?metadata_graphics.guid:'none'),
+            urn + '|' + (metadata_graphics ? metadata_graphics.guid : 'none'),
             view.name,
-            metadata_graphics?'views':'unsupported',
+            metadata_graphics ? 'views' : 'unsupported',
             false
-        ); 
-    }); 
+        );
+    });
 
     //promise the iteration
-    const views_json = await Promise.all(view_promises); 
-    res.json(views_json) 
+    const views_json = await Promise.all(view_promises);
+    res.json(views_json)
 }
 
 // Format data for tree

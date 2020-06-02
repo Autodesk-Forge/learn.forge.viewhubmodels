@@ -1,4 +1,22 @@
-﻿$(document).ready(function () {
+﻿/////////////////////////////////////////////////////////////////////
+// Copyright (c) Autodesk, Inc. All rights reserved
+// Written by Forge Partner Development
+//
+// Permission to use, copy, modify, and distribute this software in
+// object code form for any purpose and without fee is hereby granted,
+// provided that the above copyright notice appears in all copies and
+// that both that copyright notice and the limited warranty and
+// restricted rights notice below appear in all supporting
+// documentation.
+//
+// AUTODESK PROVIDES THIS PROGRAM "AS IS" AND WITH ALL FAULTS.
+// AUTODESK SPECIFICALLY DISCLAIMS ANY IMPLIED WARRANTY OF
+// MERCHANTABILITY OR FITNESS FOR A PARTICULAR USE.  AUTODESK, INC.
+// DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
+// UNINTERRUPTED OR ERROR FREE.
+/////////////////////////////////////////////////////////////////////
+
+$(document).ready(function () {
   // first, check if current visitor is signed in
   jQuery.ajax({
     url: '/api/forge/oauth/token',
@@ -42,7 +60,7 @@ function prepareUserHubsTree() {
   $('#userHubs').jstree({
     'core': {
       'themes': { "icons": true },
-      'multiple': true,
+      'multiple': false,
       'data': {
         "url": '/api/forge/datamanagement',
         "dataType": "json",
@@ -60,13 +78,12 @@ function prepareUserHubsTree() {
       'personalHub': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360hub.png' },
       'bim360Hubs': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/bim360hub.png' },
       'bim360projects': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/bim360project.png' },
-      'a360projects': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360project.png' },      
+      'a360projects': { 'icon': 'https://github.com/Autodesk-Forge/bim360appstore-data.management-nodejs-transfer.storage/raw/master/www/img/a360project.png' },
       'folders': { 'icon': 'glyphicon glyphicon-folder-open' },
       'items': { 'icon': 'glyphicon glyphicon-file' },
-      'bim360documents': { 'icon': 'glyphicon glyphicon-record' },
+      'bim360documents': { 'icon': 'glyphicon glyphicon-file' },
       'versions': { 'icon': 'glyphicon glyphicon-time' },
-      'views': { 'icon': 'glyphicon glyphicon-eye-open' },
-      'unsupported': { 'icon': 'glyphicon glyphicon-question-sign' }
+      'unsupported': { 'icon': 'glyphicon glyphicon-ban-circle' }
     },
     "sort": function (a, b) {
       var a1 = this.get_node(a);
@@ -83,26 +100,17 @@ function prepareUserHubsTree() {
     "plugins": ["types", "state", "sort"],
     "state": { "key": "autodeskHubs" }// key restore tree state
   }).bind("activate_node.jstree", function (evt, data) {
-
-    // will launch viewer for two scenarios below:
-    // #1: version (without specifying view id, i.e. using default geometry)
-    // #2: specific view (such as document in Plan folder, or view of model version in non-Plan folder)
-
-    if (data && data.node){
-       if(data.node.type == 'bim360documents' || data.node.type == 'views' ){
-        //the format of the id will be <version urn> | < guid of this specific graphics view>
-        const params = data.node.id.split('|');
-        const urn = params[0];
-        const viewableId = params[1];
-        launchViewer(urn, viewableId); 
-       }else if(data.node.type == 'versions'){
-          //the format of the id will be <version urn>
-          const urn = data.node.id
-          launchViewer(urn);  
-       }else{
-         //unsupported type
-       }
-    } 
+    if (data != null && data.node != null && (data.node.type == 'versions' || data.node.type == 'bim360documents' || data.node.type == 'views')) {
+      // in case the node.id contains a | then split into URN & viewableId
+      if (data.node.id.indexOf('|') > -1) {
+        var urn = data.node.id.split('|')[1];
+        var viewableId = data.node.id.split('|')[2];
+        launchViewer(urn, viewableId);
+      }
+      else {
+        launchViewer(data.node.id);
+      }
+    }
   });
 }
 
