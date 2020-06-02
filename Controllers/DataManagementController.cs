@@ -174,8 +174,10 @@ namespace forgeSample.Controllers
       // check if folder specifies visible types
       JArray visibleTypes = null;
       dynamic folder = (await folderApi.GetFolderAsync(projectId, folderId)).ToJson();
-      if (folder.data.attributes != null && folder.data.attributes.extension != null && folder.data.attributes.extension.data != null && !(folder.data.attributes.extension.data is JArray) && folder.data.attributes.extension.data.visibleTypes != null)
+      if (folder.data.attributes != null && folder.data.attributes.extension != null && folder.data.attributes.extension.data != null && !(folder.data.attributes.extension.data is JArray) && folder.data.attributes.extension.data.visibleTypes != null){
         visibleTypes = folder.data.attributes.extension.data.visibleTypes;
+        visibleTypes.Add("items:autodesk.bim360:C4RModel"); // C4R models are not returned on visibleTypes, therefore add them here
+      }
 
       var folderContents = await folderApi.GetFolderContentsAsync(projectId, folderId);
       // the GET Folder Contents has 2 main properties: data & included (not always available)
