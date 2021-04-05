@@ -37,7 +37,7 @@ namespace forgesample.Controllers
       Credentials credentials = await Credentials.FromSessionAsync();
 
       if(credentials == null)
-			{
+      {
         var msg = new HttpResponseMessage(HttpStatusCode.Unauthorized) { ReasonPhrase = "No credentials were available at this session!" };
         throw new HttpResponseException(msg);
       }
