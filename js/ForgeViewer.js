@@ -28,6 +28,7 @@ function launchViewer(urn, viewableId) {
   };
 
   Autodesk.Viewing.Initializer(options, () => {
+    document.getElementById('forgeViewer').innerHTML="";
     viewer = new Autodesk.Viewing.GuiViewer3D(document.getElementById('forgeViewer'));
     viewer.start();
     var documentId = 'urn:' + urn;
